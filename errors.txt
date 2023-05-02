@@ -1,0 +1,38 @@
+At first i thought it was a log in issue but seems to 
+be a registering issue not submitting the new user
+to the db.
+
+been at it for a little bit and busted out the solution code
+and tagging out after an hour ish of trying things.
+
+heres what I get in logs
+this is a regiser and log in attempt and users table
+
+let me know if theres something else needed to show where i'm at.
+i'm sure i'm over looking something stupid @_@
+
+127.0.0.1 - - [01/May/2023 23:23:00] "POST /register HTTP/1.1" 302 -
+127.0.0.1 - - [01/May/2023 23:23:00] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2023 23:23:01] "GET /_debug_toolbar/static/js/jquery.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:01] "GET /_debug_toolbar/static/js/toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:01] "GET /_debug_toolbar/static/js/jquery.tablesorter.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:01] "GET /_debug_toolbar/static/css/toolbar.css?0.469578386930827 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2023 23:23:01] "GET /_debug_toolbar/static/img/tick-red.png HTTP/1.1" 304 -
+2023-05-01 23:23:10,574 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2023-05-01 23:23:10,575 INFO sqlalchemy.engine.Engine SELECT users.username AS users_username, users.password AS users_password, users.email AS users_email, users.first_name AS users_first_name, users.last_name AS users_last_name 
+FROM users 
+WHERE users.username = %(username_1)s 
+ LIMIT %(param_1)s
+2023-05-01 23:23:10,575 INFO sqlalchemy.engine.Engine [cached since 577.8s ago] {'username_1': 'test', 'param_1': 1}
+2023-05-01 23:23:10,592 INFO sqlalchemy.engine.Engine ROLLBACK
+127.0.0.1 - - [01/May/2023 23:23:10] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2023 23:23:10] "GET /_debug_toolbar/static/js/jquery.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:10] "GET /_debug_toolbar/static/js/toolbar.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:10] "GET /_debug_toolbar/static/js/jquery.tablesorter.js HTTP/1.1" 304 -
+127.0.0.1 - - [01/May/2023 23:23:10] "GET /_debug_toolbar/static/css/toolbar.css?0.9250257239676587 HTTP/1.1" 200 -
+127.0.0.1 - - [01/May/2023 23:23:10] "GET /_debug_toolbar/static/img/tick-red.png HTTP/1.1" 304 -
+
+auth_auth_db=# SELECT * FROM users;
+ username | password | email | first_name | last_name 
+----------+----------+-------+------------+-----------
+(0 rows)
