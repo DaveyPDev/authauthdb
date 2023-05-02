@@ -13,7 +13,7 @@ def connect_db(app):
 class User(db.Model):
 
     __tablename__ = 'users'
-
+    
     username = db.Column( db.String(20), unique=True, nullable=False, primary_key=True )
     password = db.Column( db.Text, nullable=False )
     email = db.Column( db.String(50), nullable=False )
@@ -23,7 +23,7 @@ class User(db.Model):
     feedback = db.relationship("Feedback", backref="user", cascade="all,delete")
     
     @classmethod
-    def register(cls, username, password, first_name, last_name, email):
+    def register(cls, username, password, email, first_name, last_name ):
 
         hashed = bcrypt.generate_password_hash(password)
         hashed_utf8 = hashed.decode('utf8')
@@ -31,9 +31,10 @@ class User(db.Model):
         user = cls ( 
             username=username,
             password=hashed_utf8,
+            email=email,
             first_name=first_name,
             last_name=last_name,
-            email=email
+            
         )
 
         db.session.add(user)

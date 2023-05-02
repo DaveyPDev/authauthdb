@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, session, flash, url_for
 from flask_debugtoolbar import DebugToolbarExtension
 from models import connect_db, db, User, Feedback
 from werkzeug.exceptions import Unauthorized
-from form import LoginForm, RegisterForm, FeedbackForm, DeleteForm
+from forms import LoginForm, RegisterForm, FeedbackForm, DeleteForm
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///auth_auth_db'
@@ -22,13 +22,18 @@ def page_not_found(e):
 
     return render_template('404.html'), 404
 
+
 @app.route('/')
 def home_page():
 
     return redirect('/register')
 
+
 @app.route('/register', methods=["GET", "POST"])
 def register_user():
+    if 'username' in session: 
+        return redirect(f"/users/{session['username']}")
+
     form = RegisterForm()
     if form.validate_on_submit():
         username = form.username.data
@@ -40,13 +45,21 @@ def register_user():
         new_user = User.register(username, password, email, first_name, last_name)
 
         db.session.add(new_user)
+        db.session.commit()
         session['username'] = new_user.username
+
+        
         return redirect('/login')
 
     return render_template('/users/register.html', form=form)
 
+
 @app.route('/login', methods=["GET", "POST"])
 def login_user():
+
+    if 'username' is session: 
+        return redirect(f"/users/{session['username']}")
+
     form = LoginForm()
     if form.validate_on_submit():
         username = form.username.data
@@ -54,11 +67,14 @@ def login_user():
 
         user = User.authenticate(username, password)
         if user:
-            flash(f'Welcome, {user.username}!', 'primary')
-            session['user_id'] = user.id
-            return redirect('/')
+            session['username'] = user.username
+            return redirect(f'/users/{user.username}')
+        else:
+            form.username.errors = ['Invalid username/password']
+            return render_template('users/login.html', form=form)
         
     return render_template('users/login.html', form=form)
+
 
 @app.route('/users/<username>')
 def user_info(username):
@@ -73,11 +89,12 @@ def user_info(username):
 
 @app.route('/logout')
 def logout():
-    session.pop('user_id')
+    session.pop('username')
     flash('Goodbye!', 'info')
     return redirect('/login')
 
-@app.route('/users/<username>/delete')
+
+@app.route('/users/<username>/delete', methods=["GET", "POST"])
 def delete_user(username):
     if "username" not in session or username != session['username']:
         raise Unauthorized()
@@ -89,8 +106,12 @@ def delete_user(username):
 
     return redirect('/login')
 
-@app.route('/users/<username>/feedback/add', methods=["GET", "POST"])
+
+@app.route('/users/<username>/feedback/new', methods=["GET", "POST"])
 def feedback_add(username):
+
+    if 'username' not in session or username != session['username']:
+     raise Unauthorized()
     
     form = FeedbackForm()
 
@@ -115,7 +136,7 @@ def feedback_add(username):
 # @app.route('/users/feedback/update', methods=["GET", "POST"])
 
 
-@app.route('/feedback/<feedback_id>/update', methods=["GET", "POST"])
+@app.route('/feedback/<int:feedback_id>/update', methods=["GET", "POST"])
 def feedback_update(feedback_id):
 
     feedback = Feedback.query.get(feedback_id)
@@ -131,12 +152,12 @@ def feedback_update(feedback_id):
 
         db.session.commit()
 
-        return redirect("/users/{feedback.username}")
+        return redirect(f"/users/{feedback.username}")
 
     return render_template('/feedback/edit.html', form=form, feedback=feedback)
 
 
-@app.route('/feedback/<feedback_id>/delete', methods=["GET", "POST"])
+@app.route('/feedback/<int:feedback_id>/delete', methods=["GET", "POST"])
 def feedback_delete(feedback_id):
 
     feedback = Feedback.query.get(feedback_id)
@@ -151,6 +172,6 @@ def feedback_delete(feedback_id):
         db.session.commit()
 
         flash('Feedback deleted!', 'info')
-        return redirect(f'/users/{feedback.username}')
+        return redirect(f"/users/{feedback.username}")
 
     return render_template('feedback/delete.html', form=form, feedback=feedback)
